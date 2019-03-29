@@ -15,13 +15,17 @@ public class Main {
         DYN, FIXED
     }
 
+    private static class Result {
+        double dp;
+        double rate;
+    }
     public static void main(String[] args) throws Exception {
 
         long start = System.currentTimeMillis();
-        Mode mode = Mode.DYN;
+        Mode mode = Mode.FIXED;
         int numThreads = 4, repetitions = 30, maxInteractions = 100, kMax = 13;
 
-        Class<? extends ClassifyTask> taskClass = BalanceScaleClassifyTask.class;
+        Class<? extends ClassifyTask> taskClass = WineQualityClassifyTask.class;
 
 
         switch (mode) {
@@ -38,11 +42,11 @@ public class Main {
     }
 
     private static void fixedMethod(int numThreads, int repetitions, int maxInteractions, int kMax, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
-        double successRate = run(numThreads, repetitions, maxInteractions, kMax, new EuclideanDistance(), classifyTaskClass);
-        System.out.println("\nSuccess rate is " + successRate + "%");
+        Result result = run(numThreads, repetitions, maxInteractions, kMax, new EuclideanDistance(), classifyTaskClass);
+        System.out.println("\nSuccess rate is " + result.rate + "%, dp is " + result.dp);
     }
 
-    private static double run(int numThreads, int repetitions, int maxInteractions, int kMax, DistanceMethod distanceMethod, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
+    private static Result run(int numThreads, int repetitions, int maxInteractions, int kMax, DistanceMethod distanceMethod, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
         ExecutorService pool = Executors.newFixedThreadPool(numThreads);
         Collection<Callable<Double>> tasks = new ArrayList<>();
         for (int i = 0; i < repetitions; i++) {
@@ -60,7 +64,20 @@ public class Main {
             rate += future.get();
         }
 
-        return rate / (double) futures.size();
+        rate = rate / (double) futures.size();
+
+        double dp = 0d;
+
+        for (var future : futures) {
+            dp += Math.pow(future.get() - rate, 2);
+        }
+
+        dp = Math.sqrt(dp / (double) futures.size());
+
+        Result result = new Result();
+        result.dp = dp;
+        result.rate = rate;
+        return result;
     }
 
     private static void dynMethod(int numThreads, int repetitions, int maxInteractions, int kMax, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
@@ -79,10 +96,10 @@ public class Main {
 
         for (DistanceMethod distanceMethod : distanceMethods) {
 
-            double successRate = run(numThreads, repetitions, maxInteractions, kMax, distanceMethod, classifyTaskClass);
-            System.out.println("\n[" + distanceMethod.getClass().getSimpleName() + "] Success rate is " + successRate + "%\n");
-            if (bestRate <= successRate) {
-                bestRate = successRate;
+            Result result = run(numThreads, repetitions, maxInteractions, kMax, distanceMethod, classifyTaskClass);
+            System.out.println("\n[" + distanceMethod.getClass().getSimpleName() + "] Success rate is " + result.rate + "%\n, dp is " + result.dp);
+            if (bestRate <= result.rate) {
+                bestRate = result.rate;
                 bestDistanceMethod = distanceMethod.getClass().getSimpleName();
             }
 

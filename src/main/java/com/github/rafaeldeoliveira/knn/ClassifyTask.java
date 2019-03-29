@@ -70,7 +70,7 @@ public class ClassifyTask implements Callable<Double> {
         int bestK = -1;
         int lastFailures = z2.size();
 
-        for (int k = 1; k <= kMax; k++) {
+        for (int k = 3; k <= kMax; k++) {
 
             int failures = 0;
             for (Row row : z2) {
