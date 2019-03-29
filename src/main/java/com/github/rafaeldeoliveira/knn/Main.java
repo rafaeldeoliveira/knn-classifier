@@ -22,7 +22,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         long start = System.currentTimeMillis();
-        Mode mode = Mode.FIXED;
+        Mode mode = Mode.DYN;
         int numThreads = 4, repetitions = 30, maxInteractions = 100, kMax = 13;
 
         Class<? extends ClassifyTask> taskClass = WineQualityClassifyTask.class;
@@ -97,7 +97,7 @@ public class Main {
         for (DistanceMethod distanceMethod : distanceMethods) {
 
             Result result = run(numThreads, repetitions, maxInteractions, kMax, distanceMethod, classifyTaskClass);
-            System.out.println("\n[" + distanceMethod.getClass().getSimpleName() + "] Success rate is " + result.rate + "%\n, dp is " + result.dp);
+            System.out.println("\n[" + distanceMethod.getClass().getSimpleName() + "] Success rate is " + result.rate + "%, dp is " + result.dp + "\n");
             if (bestRate <= result.rate) {
                 bestRate = result.rate;
                 bestDistanceMethod = distanceMethod.getClass().getSimpleName();
