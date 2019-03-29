@@ -2,6 +2,7 @@ package com.github.rafaeldeoliveira.knn;
 
 import com.github.rafaeldeoliveira.knn.distances.*;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -15,16 +16,16 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
 
-
+        long start = System.currentTimeMillis();
         int numThreads = 3;
-        int repetitions = 20;
+        int repetitions = 1;
         ExecutorService pool = Executors.newFixedThreadPool(numThreads);
 
-        Distance distance = new CamberraDistance();
+        DistanceMethod distance = new EuclidianDistance();
 
         Collection<Callable<Double>> tasks = new ArrayList<>();
         for (int i = 0; i < repetitions; i++) {
-            tasks.add(new WineQualityClassifyTask(100, 13, i, distance));
+            tasks.add(new WineQualityClassifyTask(100, 100, i, distance));
         }
 
         var futures = pool.invokeAll(tasks);
@@ -34,13 +35,19 @@ public class Main {
             media += future.get();
         }
 
-        media = media / futures.size();
+        media = media / (double) futures.size();
 
-        System.out.println("Success rate = " + (100 - media) + "%");
+        DecimalFormat format = new DecimalFormat(".##");
 
+        System.out.println();
+        System.out.println("Success rate is " + format.format(100 - media) + "%");
+        System.out.println();
+        System.out.println("Exit after " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
         System.exit(0);
 
     }
+
+
 
 
 }

@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class ManhattanDistance implements Distance {
+public class ManhattanDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         double sum = 0d;

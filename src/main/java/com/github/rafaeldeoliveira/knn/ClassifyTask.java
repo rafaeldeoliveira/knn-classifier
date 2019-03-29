@@ -1,25 +1,27 @@
 package com.github.rafaeldeoliveira.knn;
 
 import com.github.rafaeldeoliveira.knn.classifier.KnnClassifier;
-import com.github.rafaeldeoliveira.knn.distances.Distance;
+import com.github.rafaeldeoliveira.knn.distances.DistanceMethod;
+import com.github.rafaeldeoliveira.knn.grouper.Grouper;
 import com.github.rafaeldeoliveira.knn.model.Row;
-import com.github.rafaeldeoliveira.knn.parser.Grouper;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public class ClassifyTask implements Callable<Double> {
 
 
-    private Distance distance;
+    private DistanceMethod distanceMethod;
     private int maxInteractions;
     private int kMax;
     private Set<Row> rows;
     private int id;
 
 
-    public void setDistance(Distance distance) {
-        this.distance = distance;
+    public void setDistanceMethod(DistanceMethod distanceMethod) {
+        this.distanceMethod = distanceMethod;
     }
 
     private Map<String, Integer> labels;
@@ -48,13 +50,13 @@ public class ClassifyTask implements Callable<Double> {
 
     }
 
-    public ClassifyTask(Set<Row> rows, Map<String, Integer> labels, int maxInteractions, int kMax, int id, Distance distance) {
+    public ClassifyTask(Set<Row> rows, Map<String, Integer> labels, int maxInteractions, int kMax, int id, DistanceMethod distanceMethod) {
         this.rows = rows;
         this.kMax = kMax;
         this.maxInteractions = maxInteractions;
         this.id = id;
         this.labels = labels;
-        this.distance = distance;
+        this.distanceMethod = distanceMethod;
     }
 
 
@@ -72,12 +74,12 @@ public class ClassifyTask implements Callable<Double> {
         Set<Row> z2 = new HashSet<>(groups.get(1));
         Set<Row> z3 = new HashSet<>(groups.get(2));
 
-        KnnClassifier classifier = new KnnClassifier(z1, distance);
+        KnnClassifier classifier = new KnnClassifier(z1, distanceMethod);
 
         int bestK = -1;
         int lastFailures = z2.size();
 
-        for (int k = 3; k <= kMax; k += 2) {
+        for (int k = 1; k <= kMax; k++) {
 
             int failures = 0;
             for (Row row : z2) {
@@ -93,28 +95,31 @@ public class ClassifyTask implements Callable<Double> {
             }
         }
 
-        System.out.println("#" + id + " Best k is " + bestK);
+        log("Best k is " + bestK);
 
         Set<Row> bestZ1 = null;
         Integer z1Failures = null;
 
         for (int i = 0; i < maxInteractions; i++) {
             Set<Row> newZ1 = new HashSet<>(z1);
-            classifier = new KnnClassifier(newZ1, distance);
+            classifier = new KnnClassifier(newZ1, distanceMethod);
             int failures = 0;
 
             for (Row row : new HashSet<>(z2)) {
                 String label = classifier.classify(row, bestK, comparator);
                 if (!label.equals(row.getLabel())) {
                     // encontra um elemento do mesmo tipo de errado e substitui em z2
-                    z1.stream().filter(r -> r.getLabel().equals(label))
-                            .findFirst()
-                            .ifPresent(r -> {
-                                z1.remove(r);
-                                z1.add(row);
-                                z2.remove(row);
-                                z2.add(r);
-                            });
+                    List<Row> sameLabelElements = z1.stream().filter(r -> r.getLabel().equals(label)).collect(Collectors.toList());
+                    if(!sameLabelElements.isEmpty()) {
+                        int element = ThreadLocalRandom.current().nextInt(0, sameLabelElements.size());
+                        Row elementToReplace = sameLabelElements.get(element);
+
+                        z1.remove(elementToReplace);
+                        z1.add(row);
+                        z2.remove(row);
+                        z2.add(elementToReplace);
+
+                    }
                     failures++;
                 }
             }
@@ -124,11 +129,11 @@ public class ClassifyTask implements Callable<Double> {
             }
         }
 
-        System.out.println("#" + id + " Best z1 had " + z1Failures + " failures on z2");
+        log("Best z1 had " + z1Failures + " failures on z2");
 
         // nesse ponto o z1 deve estar bom, hora de comparar com o z3.
 
-        classifier = new KnnClassifier(bestZ1, distance);
+        classifier = new KnnClassifier(bestZ1, distanceMethod);
 
         int z3failures = 0;
         for (Row row : z3) {
@@ -142,11 +147,30 @@ public class ClassifyTask implements Callable<Double> {
         double hit = z3failures * 100 / groups.get(2).size();
 
         if (z3failures > 0) {
-            System.out.println("#" + (id) + " [z3] Success " + (100 - hit) + "% (" + z3failures + " failures)");
+            success("[z3] Success " + (100 - hit) + "% (" + z3failures + " failures)");
         } else {
-            System.out.println("#" + (id) + " Our z1 is perfect.");
+            success("Our z1 is perfect.");
         }
 
         return hit;
     }
+
+    private void log(String message, String color) {
+        if (color != null) {
+            System.out.print(color);
+        }
+        System.out.println("[Thread-" + id + "] " + message);
+        if (color != null) {
+            System.out.print(ANSI_RESET);
+        }
+    }
+    private void log(String message) {
+        log(message, null);
+    }
+    private void success(String message) {
+        log(message, ANSI_GREEN);
+    }
+
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_RESET = "\u001B[0m";
 }

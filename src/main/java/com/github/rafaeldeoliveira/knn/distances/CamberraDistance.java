@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class CamberraDistance implements Distance {
+public class CamberraDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         if (element.getColumnCount() != refElement.getColumnCount()) {

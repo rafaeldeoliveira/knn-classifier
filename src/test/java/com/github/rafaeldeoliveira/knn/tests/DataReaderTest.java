@@ -3,13 +3,11 @@ package com.github.rafaeldeoliveira.knn.tests;
 
 import com.github.rafaeldeoliveira.knn.reader.DataReader;
 import com.github.rafaeldeoliveira.knn.model.Row;
-import com.github.rafaeldeoliveira.knn.parser.Grouper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Set;
 
 public class DataReaderTest {

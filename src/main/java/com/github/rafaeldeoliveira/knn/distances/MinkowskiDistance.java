@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class MinkowskiDistance implements Distance {
+public class MinkowskiDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         int p = 5;

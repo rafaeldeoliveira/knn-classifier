@@ -1,6 +1,6 @@
 package com.github.rafaeldeoliveira.knn.classifier;
 
-import com.github.rafaeldeoliveira.knn.distances.Distance;
+import com.github.rafaeldeoliveira.knn.distances.DistanceMethod;
 import com.github.rafaeldeoliveira.knn.model.Row;
 
 import java.util.Comparator;
@@ -10,18 +10,18 @@ import java.util.stream.Collectors;
 
 public class KnnClassifier {
 
-    private final Distance distance;
+    private final DistanceMethod distanceMethod;
     private Set<Row> data;
 
-    public KnnClassifier(Set<Row> data, Distance distance) {
+    public KnnClassifier(Set<Row> data, DistanceMethod distanceMethod) {
         this.data = data;
-        this.distance = distance;
+        this.distanceMethod = distanceMethod;
     }
 
     public String classify(Row element, int k, Comparator<String> comparator) {
 
         return this.data.parallelStream()
-                .sorted(Comparator.comparing(ref -> distance.calculate(element, ref)))
+                .sorted(Comparator.comparing(ref -> distanceMethod.calculate(element, ref)))
                 .limit(k)
                 .map(Row::getLabel)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))

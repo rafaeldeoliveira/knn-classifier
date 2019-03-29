@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class CorrelationalDistance implements Distance {
+public class CorrelationalDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         double distance = 0d;

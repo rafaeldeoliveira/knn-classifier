@@ -1,4 +1,4 @@
-package com.github.rafaeldeoliveira.knn.parser;
+package com.github.rafaeldeoliveira.knn.grouper;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 

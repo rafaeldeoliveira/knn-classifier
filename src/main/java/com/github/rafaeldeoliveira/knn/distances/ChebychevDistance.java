@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class ChebychevDistance implements Distance {
+public class ChebychevDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         double max = 0d;
