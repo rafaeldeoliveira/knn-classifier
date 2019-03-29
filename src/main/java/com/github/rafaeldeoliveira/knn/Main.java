@@ -2,52 +2,94 @@ package com.github.rafaeldeoliveira.knn;
 
 import com.github.rafaeldeoliveira.knn.distances.*;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 public class Main {
 
-
-    public static void main(String[] args) throws InterruptedException, ExecutionException {
-
-        long start = System.currentTimeMillis();
-        int numThreads = 3;
-        int repetitions = 1;
-        ExecutorService pool = Executors.newFixedThreadPool(numThreads);
-
-        DistanceMethod distance = new EuclidianDistance();
-
-        Collection<Callable<Double>> tasks = new ArrayList<>();
-        for (int i = 0; i < repetitions; i++) {
-            tasks.add(new WineQualityClassifyTask(100, 100, i, distance));
-        }
-
-        var futures = pool.invokeAll(tasks);
-
-        double media = 0d;
-        for (var future : futures) {
-            media += future.get();
-        }
-
-        media = media / (double) futures.size();
-
-        DecimalFormat format = new DecimalFormat(".##");
-
-        System.out.println();
-        System.out.println("Success rate is " + format.format(100 - media) + "%");
-        System.out.println();
-        System.out.println("Exit after " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
-        System.exit(0);
-
+    private enum Mode {
+        DYN, FIXED
     }
 
+    public static void main(String[] args) throws Exception {
 
+        long start = System.currentTimeMillis();
+        Mode mode = Mode.DYN;
+        int numThreads = 4, repetitions = 30, maxInteractions = 100, kMax = 13;
+
+        Class<? extends ClassifyTask> taskClass = BalanceScaleClassifyTask.class;
+
+
+        switch (mode) {
+            case DYN:
+                dynMethod(numThreads, repetitions, maxInteractions, kMax, taskClass);
+                break;
+            case FIXED:
+                fixedMethod(numThreads, repetitions, maxInteractions, kMax, taskClass);
+                break;
+        }
+
+        System.out.println("\nExit after " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+        System.exit(0);
+    }
+
+    private static void fixedMethod(int numThreads, int repetitions, int maxInteractions, int kMax, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
+        double successRate = run(numThreads, repetitions, maxInteractions, kMax, new EuclideanDistance(), classifyTaskClass);
+        System.out.println("\nSuccess rate is " + successRate + "%");
+    }
+
+    private static double run(int numThreads, int repetitions, int maxInteractions, int kMax, DistanceMethod distanceMethod, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(numThreads);
+        Collection<Callable<Double>> tasks = new ArrayList<>();
+        for (int i = 0; i < repetitions; i++) {
+            ClassifyTask task = classifyTaskClass.getConstructor().newInstance();
+            task.setMaxInteractions(maxInteractions);
+            task.setkMax(kMax);
+            task.setDistanceMethod(distanceMethod);
+            task.setId(i);
+            tasks.add(task);
+        }
+        var futures = pool.invokeAll(tasks);
+
+        double rate = 0d;
+        for (var future : futures) {
+            rate += future.get();
+        }
+
+        return rate / (double) futures.size();
+    }
+
+    private static void dynMethod(int numThreads, int repetitions, int maxInteractions, int kMax, Class<? extends ClassifyTask> classifyTaskClass) throws Exception {
+
+        DistanceMethod[] distanceMethods = {
+                new CanberraDistance(),
+                new ChebychevDistance(),
+                new CorrelationalDistance(),
+                new EuclideanDistance(),
+                new ManhattanDistance(),
+                new MinkowskiDistance()
+        };
+
+        String bestDistanceMethod = null;
+        double bestRate = -1d;
+
+        for (DistanceMethod distanceMethod : distanceMethods) {
+
+            double successRate = run(numThreads, repetitions, maxInteractions, kMax, distanceMethod, classifyTaskClass);
+            System.out.println("\n[" + distanceMethod.getClass().getSimpleName() + "] Success rate is " + successRate + "%\n");
+            if (bestRate <= successRate) {
+                bestRate = successRate;
+                bestDistanceMethod = distanceMethod.getClass().getSimpleName();
+            }
+
+        }
+        System.out.println("\nBest distance method is " + bestDistanceMethod + " with success rate of " + bestRate + "%");
+
+    }
 
 
 }

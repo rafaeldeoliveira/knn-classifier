@@ -2,7 +2,7 @@ package com.github.rafaeldeoliveira.knn.distances;
 
 import com.github.rafaeldeoliveira.knn.model.Row;
 
-public class EuclidianDistance implements DistanceMethod {
+public class EuclideanDistance implements DistanceMethod {
     @Override
     public double calculate(Row element, Row refElement) {
         if (element.getColumnCount() != refElement.getColumnCount()) {

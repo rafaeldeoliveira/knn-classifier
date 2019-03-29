@@ -11,24 +11,15 @@ import java.util.Set;
 public class IrisClassifyTask extends ClassifyTask {
 
 
-    public IrisClassifyTask(int maxInteractions, int kMax, int id, DistanceMethod distanceMethod) {
-
-        setMaxInteractions(maxInteractions);
-        setkMax(kMax);
-        setId(id);
-        setDistanceMethod(distanceMethod);
-
+    public IrisClassifyTask() {
         Map<String, Integer> labels = new HashMap<>();
         labels.put("Iris-setosa", 1);
         labels.put("Iris-versicolor", 2);
         labels.put("Iris-virginica", 3);
-
         setLabels(labels);
 
         DataReader reader = new DataReader();
-
-        Set<Row> rows = reader.read(reader.getClass().getResource("/iris.data"), ",", 4);
-
-        setRows(rows);
+        setRows(reader.read(reader.getClass().getResource("/iris.data"), ",", 4));
     }
+
 }

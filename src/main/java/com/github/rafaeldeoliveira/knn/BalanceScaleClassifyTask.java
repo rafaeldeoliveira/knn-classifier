@@ -10,25 +10,15 @@ import java.util.Set;
 
 public class BalanceScaleClassifyTask extends ClassifyTask {
 
-
-    public BalanceScaleClassifyTask(int maxInteractions, int kMax, int id, DistanceMethod distanceMethod) {
-
-        setMaxInteractions(maxInteractions);
-        setkMax(kMax);
-        setId(id);
-        setDistanceMethod(distanceMethod);
-
+    public BalanceScaleClassifyTask() {
         Map<String, Integer> labels = new HashMap<>();
         labels.put("R", 1);
         labels.put("L", 2);
         labels.put("B", 3);
 
         setLabels(labels);
-
         DataReader reader = new DataReader();
-
-        Set<Row> rows = reader.read(reader.getClass().getResource("/balance-scale.data"), ",", 0);
-
-        setRows(rows);
+        setRows(reader.read(reader.getClass().getResource("/balance-scale.data"), ",", 0));
     }
+
 }

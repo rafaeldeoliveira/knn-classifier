@@ -50,15 +50,6 @@ public class ClassifyTask implements Callable<Double> {
 
     }
 
-    public ClassifyTask(Set<Row> rows, Map<String, Integer> labels, int maxInteractions, int kMax, int id, DistanceMethod distanceMethod) {
-        this.rows = rows;
-        this.kMax = kMax;
-        this.maxInteractions = maxInteractions;
-        this.id = id;
-        this.labels = labels;
-        this.distanceMethod = distanceMethod;
-    }
-
 
     public Double call() {
 
@@ -144,15 +135,15 @@ public class ClassifyTask implements Callable<Double> {
             }
         }
 
-        double hit = z3failures * 100 / groups.get(2).size();
+        double successRate = 100 - (z3failures * 100 / z3.size());
 
         if (z3failures > 0) {
-            success("[z3] Success " + (100 - hit) + "% (" + z3failures + " failures)");
+            success("[z3] Success " + successRate + "% (" + z3failures + " failures)");
         } else {
             success("Our z1 is perfect.");
         }
 
-        return hit;
+        return successRate;
     }
 
     private void log(String message, String color) {
